@@ -6,6 +6,8 @@ import socket
 import threading
 from datetime import datetime
 import json
+from multiprocessing import Process
+
 
 class HttpHandler(BaseHTTPRequestHandler):
     def do_POST(self):
@@ -13,13 +15,13 @@ class HttpHandler(BaseHTTPRequestHandler):
         data_parse = urllib.parse.unquote_plus(data.decode())
         data_dict = {key: value for key, value in [el.split('=') for el in data_parse.split('&')]}
         print(data_dict)
+        self.send_response(302)
+        self.send_header('Location', '/')
+        self.end_headers()
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         server = ("127.0.0.1", 6000)
         sock.sendto(json.dumps(data_dict).encode("utf-8"), server)
         sock.close()
-        self.send_response(302)
-        self.send_header('Location', '/')
-        self.end_headers()
 
     def do_GET(self):
         pr_url = urllib.parse.urlparse(self.path)
@@ -61,7 +63,7 @@ def run(server_class=HTTPServer, handler_class=HttpHandler):
     except KeyboardInterrupt:
         http.server_close()
 
-# def run_client(ip, port):
+
 
 def run_server(ip, port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -70,11 +72,12 @@ def run_server(ip, port):
     try:
         while True:
             data, address = sock.recvfrom(1024)
-            data_file = {f"{datetime.now()}":json.loads(data)}
-            print(data_file)
-            with open("./storage/data.json", "w+", encoding="utf-8") as f:
-                json.dump(data_file, f)
-            break
+            # data_dict = {f"{datetime.now()}": json.loads(data)}
+            with open("./storage/data.json", "r", encoding="utf-8") as f:
+                dict = json.load(f)
+            dict[f"{datetime.now()}"]= json.loads(data)
+            with open("./storage/data.json", "w", encoding="utf-8") as f:
+               json.dump(dict, f, indent = 4)
     except KeyboardInterrupt:
         print(f'Destroy server')
     finally:
@@ -85,11 +88,12 @@ if __name__ == '__main__':
 
     
     
-    HTTP = threading.Thread(target=run())
-    Socket = threading.Thread(target=run_server, args=("127.0.0.1", 6000))
+    HTTP = Process(target=run)
+    Socket = Process(target=run_server, args=("127.0.0.1", 6000), daemon=True)
     
-    HTTP.start()
     Socket.start()
+    HTTP.start()
+    
     # Socket_client.start()
     
     HTTP.join()
