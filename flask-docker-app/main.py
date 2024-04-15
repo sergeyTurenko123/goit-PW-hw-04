@@ -51,8 +51,6 @@ class HttpHandler(BaseHTTPRequestHandler):
         with open(f'.{self.path}', 'rb') as file:
             self.wfile.write(file.read())
 
-    
-
 def run(server_class=HTTPServer, handler_class=HttpHandler):
     server_address = ('', 3000)
     http = server_class(server_address, handler_class)
@@ -60,8 +58,6 @@ def run(server_class=HTTPServer, handler_class=HttpHandler):
         http.serve_forever()
     except KeyboardInterrupt:
         http.server_close()
-
-
 
 def run_server(ip, port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -81,11 +77,8 @@ def run_server(ip, port):
     finally:
         sock.close()
 
-
 if __name__ == '__main__':
 
-    
-    
     HTTP = Process(target=run)
     Socket = Process(target=run_server, args=("127.0.0.1", 6000), daemon=True)
     
